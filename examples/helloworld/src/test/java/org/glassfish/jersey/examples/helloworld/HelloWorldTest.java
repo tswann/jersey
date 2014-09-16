@@ -75,12 +75,6 @@ public class HelloWorldTest extends JerseyTest {
         return new ResourceConfig(HelloWorldResource.class);
     }
 
-//    Uncomment to use Grizzly async client
-//    @Override
-//    protected void configureClient(ClientConfig clientConfig) {
-//        clientConfig.connector(new GrizzlyConnector(clientConfig));
-//    }
-
     @Test
     @Ignore("not compatible with test framework (doesn't use client())")
     public void testHelloWorld() throws Exception {
@@ -101,42 +95,6 @@ public class HelloWorldTest extends JerseyTest {
     public void testConnection() {
         Response response = target().path(App.ROOT_PATH).request("text/plain").get();
         assertEquals(200, response.getStatus());
-    }
-
-    @Test
-    public void testClientStringResponse() {
-        String s = target().path(App.ROOT_PATH).request().get(String.class);
-        assertEquals(HelloWorldResource.CLICHED_MESSAGE, s);
-    }
-
-    @Test
-    public void testAsyncClientRequests() throws InterruptedException {
-        final int REQUESTS = 10;
-        final CountDownLatch latch = new CountDownLatch(REQUESTS);
-        final long tic = System.currentTimeMillis();
-        for (int i = 0; i < REQUESTS; i++) {
-            final int id = i;
-            target().path(App.ROOT_PATH).request().async().get(new InvocationCallback<Response>() {
-                @Override
-                public void completed(Response response) {
-                    try {
-                        final String result = response.readEntity(String.class);
-                        assertEquals(HelloWorldResource.CLICHED_MESSAGE, result);
-                    } finally {
-                        latch.countDown();
-                    }
-                }
-
-                @Override
-                public void failed(Throwable error) {
-                    error.printStackTrace();
-                    latch.countDown();
-                }
-            });
-        }
-        latch.await(10 * getAsyncTimeoutMultiplier(), TimeUnit.SECONDS);
-        final long toc = System.currentTimeMillis();
-        Logger.getLogger(HelloWorldTest.class.getName()).info("Executed in: " + (toc - tic));
     }
 
     @Test
@@ -182,62 +140,5 @@ public class HelloWorldTest extends JerseyTest {
 
         response = target().path(App.ROOT_PATH).path("arbitrary").request().get();
         assertEquals(404, response.getStatus());
-    }
-
-    @Test
-    public void testLoggingFilterClientClass() {
-        Client client = client();
-        client.register(CustomLoggingFilter.class).property("foo", "bar");
-        CustomLoggingFilter.preFilterCalled = CustomLoggingFilter.postFilterCalled = 0;
-        String s = target().path(App.ROOT_PATH).request().get(String.class);
-        assertEquals(HelloWorldResource.CLICHED_MESSAGE, s);
-        assertEquals(1, CustomLoggingFilter.preFilterCalled);
-        assertEquals(1, CustomLoggingFilter.postFilterCalled);
-    }
-
-    @Test
-    public void testLoggingFilterClientInstance() {
-        Client client = client();
-        client.register(new CustomLoggingFilter()).property("foo", "bar");
-        CustomLoggingFilter.preFilterCalled = CustomLoggingFilter.postFilterCalled = 0;
-        String s = target().path(App.ROOT_PATH).request().get(String.class);
-        assertEquals(HelloWorldResource.CLICHED_MESSAGE, s);
-        assertEquals(1, CustomLoggingFilter.preFilterCalled);
-        assertEquals(1, CustomLoggingFilter.postFilterCalled);
-    }
-
-    @Test
-    public void testLoggingFilterTargetClass() {
-        WebTarget target = target().path(App.ROOT_PATH);
-        target.register(CustomLoggingFilter.class).property("foo", "bar");
-        CustomLoggingFilter.preFilterCalled = CustomLoggingFilter.postFilterCalled = 0;
-        String s = target.request().get(String.class);
-        assertEquals(HelloWorldResource.CLICHED_MESSAGE, s);
-        assertEquals(1, CustomLoggingFilter.preFilterCalled);
-        assertEquals(1, CustomLoggingFilter.postFilterCalled);
-    }
-
-    @Test
-    public void testLoggingFilterTargetInstance() {
-        WebTarget target = target().path(App.ROOT_PATH);
-        target.register(new CustomLoggingFilter()).property("foo", "bar");
-        CustomLoggingFilter.preFilterCalled = CustomLoggingFilter.postFilterCalled = 0;
-        String s = target.request().get(String.class);
-        assertEquals(HelloWorldResource.CLICHED_MESSAGE, s);
-        assertEquals(1, CustomLoggingFilter.preFilterCalled);
-        assertEquals(1, CustomLoggingFilter.postFilterCalled);
-    }
-
-    @Test
-    public void testConfigurationUpdate() {
-        Client client1 = client();
-        client1.register(CustomLoggingFilter.class).property("foo", "bar");
-
-        Client client = ClientBuilder.newClient(client1.getConfiguration());
-        CustomLoggingFilter.preFilterCalled = CustomLoggingFilter.postFilterCalled = 0;
-        String s = target().path(App.ROOT_PATH).request().get(String.class);
-        assertEquals(HelloWorldResource.CLICHED_MESSAGE, s);
-        assertEquals(1, CustomLoggingFilter.preFilterCalled);
-        assertEquals(1, CustomLoggingFilter.postFilterCalled);
     }
 }

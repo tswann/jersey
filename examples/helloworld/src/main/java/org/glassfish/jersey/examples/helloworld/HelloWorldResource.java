@@ -39,22 +39,51 @@
  */
 package org.glassfish.jersey.examples.helloworld;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.Consumes;
 
 /**
  *
  * @author Jakub Podlesak (jakub.podlesak at oracle.com)
  */
-@Path("helloworld")
+@Path("annotation")
 public class HelloWorldResource {
-    public static final String CLICHED_MESSAGE = "Hello World!";
 
     @GET
-    @Produces("text/plain")
-    public String getHello() {
-        return CLICHED_MESSAGE;
+    @Produces("text/xml")
+    @Consumes("text/plain")
+    public String getHello(String document) {
+    	File temp = new File("/home/cloudera/test.txt");
+    	if(!temp.exists()){
+    		try {
+				temp.createNewFile();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+    	
+    	//true = append file
+		FileWriter fileWritter = null;
+		try {
+			fileWritter = new FileWriter(temp.getName(),true);
+	        BufferedWriter bufferWritter = new BufferedWriter(fileWritter);
+				bufferWritter.write("mapped! :o");
+		        bufferWritter.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+        System.out.println("Done");
+        return "<GateDocument></GateDocument>";
     }
 
 }
